@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>VCF Customer Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f7fa;
+      color: #1e293b;
+    }
+
+    /* Simplified Header */
+    .header {
+      background: linear-gradient(135deg, #0077c8, #005a9e);
+      color: white;
+      padding: 32px 24px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      opacity: 0.9;
+    }
+
+    /* Single Search Bar */
+    .search-container {
+      max-width: 900px;
+      margin: -24px auto 32px;
+      padding: 0 24px;
+    }
+
+    .search-box {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 8px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .search-input {
+      flex: 1;
+      border: none;
+      padding: 14px 16px;
+      font-size: 16px;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    .filter-btn {
+      background: #f1f5f9;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #475569;
+      cursor: pointer;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .filter-btn:hover {
+      background: #e2e8f0;
+    }
+
+    .filter-btn.active {
+      background: #0077c8;
+      color: white;
+    }
+
+    /* Quick Filter Pills */
+    .quick-filters {
+      max-width: 900px;
+      margin: 0 auto 24px;
+      padding: 0 24px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .filter-pill {
+      background: white;
+      border: 1.5px solid #e2e8f0;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 500;
+      color: #475569;
+    }
+
+    .filter-pill:hover {
+      border-color: #0077c8;
+      background: #e8f4fc;
+    }
+
+    .filter-pill.active {
+      background: #0077c8;
+      color: white;
+      border-color: #0077c8;
+    }
+
+    /* Main Content - Single Column */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 24px 48px;
+    }
+
+    .result-count {
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    /* Customer Cards - Simplified */
+    .customer-grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .customer-item {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 2px solid transparent;
+    }
+
+    .customer-item:hover {
+      box-shadow: 0 6px 20px rgba(0,119,200,0.15);
+      transform: translateY(-2px);
+      border-color: #0077c8;
+    }
+
+    .customer-item.expanded {
+      border-color: #0077c8;
+      box-shadow: 0 8px 24px rgba(0,119,200,0.2);
+    }
+
+    .customer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 12px;
+      gap: 16px;
+    }
+
+    .customer-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+
+    .customer-info {
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 12px;
+    }
+
+    .expand-icon {
+      color: #0077c8;
+      font-size: 24px;
+      line-height: 1;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+
+    .customer-item.expanded .expand-icon {
+      transform: rotate(180deg);
+    }
+
+    .product-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .product-tag {
+      background: #e8f4fc;
+      color: #0077c8;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* Expandable Details */
+    .customer-details {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .customer-item.expanded .customer-details {
+      max-height: 2000px;
+    }
+
+    .detail-section {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 2px solid #f1f5f9;
+    }
+
+    .detail-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #0077c8;
+      margin-bottom: 10px;
+    }
+
+    .detail-text {
+      font-size: 15px;
+      line-height: 1.6;
+      color: #475569;
+      margin-bottom: 16px;
+    }
+
+    .benefit-item {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #475569;
+    }
+
+    .benefit-check {
+      color: #10b981;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 64px 24px;
+      color: #94a3b8;
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 640px) {
+      h1 {
+        font-size: 24px;
+      }
+
+      .search-box {
+        flex-direction: column;
+      }
+
+      .filter-btn {
+        width: 100%;
+      }
+
+      .customer-header {
+        flex-direction: column;
+        align-items: start;
+      }
+
+      .expand-icon {
+        align-self: flex-end;
+      }
+    }
+
+    /* Loading state */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>VCF Customer Intelligence for Tata Steel</h1>
+    <p class="subtitle">Mining, Metals & Manufacturing</p>
+  </header>
+
+  <div class="search-container">
+    <div class="search-box">
+      <input 
+        type="text" 
+        class="search-input" 
+        id="searchInput"
+        placeholder="Search customers, industries, or use cases..."
+        autocomplete="off"
+      />
+      <button class="filter-btn" id="resetBtn">Clear</button>
+    </div>
+  </div>
+
+  <div class="quick-filters" id="quickFilters">
+    <!-- Pills injected by JS -->
+  </div>
+
+  <main class="container">
+    <div class="result-count" id="resultCount"></div>
+    <div class="customer-grid" id="customerGrid">
+      <div class="loading">Loading customers...</div>
+    </div>
+  </main>
+
+  <script>
+    (function() {
+      'use strict';
+
+      const customers = [
+        {
+          name: "Audi",
+          industry: "Automotive Manufacturing",
+          geo: "Germany / Global",
+          products: ["VCF", "vSphere", "NSX", "vSAN", "VCF Edge"],
+          useCase: "Smart Manufacturing: Consolidated industrial PCs (IPCs) onto virtualized edge servers; running critical manufacturing execution systems (MES) and worker guidance apps on a single platform.",
+          benefits: [
+            "Reduced recovery times from hours to minutes",
+            "Lowered hardware footprint and maintenance costs by replacing individual IPCs",
+            "Faster reconfiguration of production lines"
+          ]
+        },
+        {
+          name: "Nol-Tec Systems",
+          industry: "Manufacturing (Bulk Material Handling)",
+          geo: "USA",
+          products: ["VCF", "vSphere", "NSX", "vSAN", "vRealize Suite"],
+          useCase: "Infrastructure Refresh: Replaced aging hardware with a private cloud to support production environments and improve visibility.",
+          benefits: [
+            "Improved system reliability and performance for business-critical apps",
+            "Single pane of glass management for storage, networking, and compute",
+            "Reduced time spent on manual IT maintenance"
+          ]
+        },
+        {
+          name: "Rio Tinto",
+          industry: "Mining & Metals",
+          geo: "Global / Australia",
+          products: ["vSphere", "Private Cloud"],
+          useCase: "Automation & Modernization: Migrating critical control and information management systems to a private cloud/hybrid model to support Mine of the Future automation initiatives.",
+          benefits: [
+            "Improved stability and security of global directory services",
+            "Decreased operational costs through standardized global IT environments",
+            "Reduced outage risks"
+          ]
+        },
+        {
+          name: "ArcelorMittal Bremen",
+          industry: "Steel / Metals",
+          geo: "Germany",
+          products: ["vSphere", "Data Protector"],
+          useCase: "Virtualization at Scale: Managing a massive environment of ~570 VMs alongside physical partitions for steel production operations.",
+          benefits: [
+            "Seamless backup and recovery across physical and virtual systems",
+            "Standardized data management across complex hybrid environment of IBM AIX and VMware"
+          ]
+        },
+        {
+          name: "Konica Minolta",
+          industry: "Manufacturing",
+          geo: "Japan / Global",
+          products: ["vSAN", "Private Cloud"],
+          useCase: "HCI Transformation: Evolved private cloud infrastructure into a Hyper-Converged Infrastructure (HCI) centered system.",
+          benefits: [
+            "Increased system availability by 50%",
+            "Simplified equipment operation and maintenance",
+            "Significant reduction in physical server and storage hardware costs"
+          ]
+        },
+        {
+          name: "Charlotte Pipe and Foundry",
+          industry: "Manufacturing (Iron/PVC Pipe)",
+          geo: "USA",
+          products: ["NSX"],
+          useCase: "Security & Micro-segmentation: Securing the manufacturing network by isolating workloads and applying specific security policies to minimize attack surfaces.",
+          benefits: [
+            "Significantly improved network security stance",
+            "Stable operation of critical manufacturing production systems without downtime"
+          ]
+        },
+        {
+          name: "HTL-STREFA",
+          industry: "Medical Manufacturing",
+          geo: "Poland",
+          products: ["NSX", "vRealize"],
+          useCase: "Business Continuity: Running 20% of business-critical systems in a private cloud connected via secure tunnels to manufacturing facilities.",
+          benefits: [
+            "Supports stable operation of manufacturing lines shipping 10M+ units daily",
+            "Rapid provisioning of new services for production needs"
+          ]
+        },
+        {
+          name: "Tata Steel",
+          industry: "Steel / Metals",
+          geo: "Global / UK",
+          products: ["vSphere"],
+          useCase: "Virtual Testing: Using VMware-compliant Rockwell Automation software to virtually test control systems and alarms before deploying to live kilns.",
+          benefits: [
+            "Ability to deliberately create faults in a safe virtual environment",
+            "Incredible amount of offline testing ensures live systems perform flawlessly"
+          ]
+        },
+        {
+          name: "Glencore",
+          industry: "Mining",
+          geo: "Global",
+          products: ["vSphere"],
+          useCase: "Infrastructure Virtualization: Extensive use of VMware server virtualization to support global mining IT infrastructure.",
+          benefits: [
+            "Reduction of physical server sprawl across remote mining sites",
+            "Centralized management of distributed IT assets in remote locations"
+          ]
+        }
+      ];
+
+      // DOM
+      const searchInput = document.getElementById('searchInput');
+      const resetBtn = document.getElementById('resetBtn');
+      const quickFilters = document.getElementById('quickFilters');
+      const resultCount = document.getElementById('resultCount');
+      const customerGrid = document.getElementById('customerGrid');
+
+      let activeFilter = '';
+
+      const sanitize = (str) => {
+        const div = document.createElement('div');
+        div.textContent = str || '';
+        return div.innerHTML;
+      };
+
+      // Build quick filter pills
+      const buildFilters = () => {
+        const industries = [...new Set(customers.map(c => c.industry))].sort();
+        const allFilters = ['All', ...industries];
+
+        quickFilters.innerHTML = allFilters.map(filter => 
+          `<button class="filter-pill ${filter === 'All' ? 'active' : ''}" data-filter="${filter}">
+            ${sanitize(filter)}
+          </button>`
+        ).join('');
+      };
+
+      // Filter logic
+      const getFiltered = () => {
+        const query = searchInput.value.trim().toLowerCase();
+
+        return customers.filter(c => {
+          // Active filter check
+          if (activeFilter && activeFilter !== 'All' && c.industry !== activeFilter) {
+            return false;
+          }
+
+          // Search check
+          if (!query) return true;
+
+          const searchable = [
+            c.name,
+            c.industry,
+            c.geo,
+            ...c.products,
+            c.useCase,
+            ...c.benefits
+          ].join(' ').toLowerCase();
+
+          return searchable.includes(query);
+        });
+      };
+
+      // Render customer cards
+      const render = () => {
+        const filtered = getFiltered();
+
+        if (!filtered.length) {
+          customerGrid.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon">🔍</div>
+              <div>No customers match your search</div>
+            </div>
+          `;
+          resultCount.textContent = '0 customers';
+          return;
+        }
+
+        customerGrid.innerHTML = filtered.map((c, idx) => `
+          <div class="customer-item" data-index="${customers.indexOf(c)}">
+            <div class="customer-header">
+              <div style="flex:1;">
+                <div class="customer-name">${sanitize(c.name)}</div>
+                <div class="customer-info">${sanitize(c.industry)} • ${sanitize(c.geo)}</div>
+                <div class="product-tags">
+                  ${c.products.map(p => `<span class="product-tag">${sanitize(p)}</span>`).join('')}
+                </div>
+              </div>
+              <div class="expand-icon">⌄</div>
+            </div>
+
+            <div class="customer-details">
+              <div class="detail-section">
+                <div class="detail-title">Use Case</div>
+                <div class="detail-text">${sanitize(c.useCase)}</div>
+              </div>
+
+              <div class="detail-section">
+                <div class="detail-title">Business Impact</div>
+                ${c.benefits.map(b => `
+                  <div class="benefit-item">
+                    <span class="benefit-check">✓</span>
+                    <span>${sanitize(b)}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        `).join('');
+
+        resultCount.textContent = `${filtered.length} customer${filtered.length !== 1 ? 's' : ''}`;
+      };
+
+      // Toggle expand
+      customerGrid.addEventListener('click', (e) => {
+        const card = e.target.closest('.customer-item');
+        if (!card) return;
+
+        // Close all others
+        document.querySelectorAll('.customer-item').forEach(item => {
+          if (item !== card) item.classList.remove('expanded');
+        });
+
+        // Toggle clicked
+        card.classList.toggle('expanded');
+      });
+
+      // Filter pills
+      quickFilters.addEventListener('click', (e) => {
+        const pill = e.target.closest('.filter-pill');
+        if (!pill) return;
+
+        document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+
+        activeFilter = pill.dataset.filter;
+        render();
+      });
+
+      // Search
+      searchInput.addEventListener('input', render);
+
+      // Reset
+      resetBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        activeFilter = 'All';
+        document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+        document.querySelector('[data-filter="All"]').classList.add('active');
+        render();
+      });
+
+      // Initialize
+      buildFilters();
+      render();
+    })();
+  </script>
+</body>
+</html>
